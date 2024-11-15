@@ -7,23 +7,46 @@ import threading
 import pytz
 import sys
 import signal
+import socket
+from fluent import sender
+from colorama import init, Fore, Style
 
-# Emoji indicators
-EMOJI_INFO = "[INFO] "
-EMOJI_WARN = "[WARN] "
-EMOJI_ERROR = "[ERROR] "
-EMOJI_FATAL = "[FATAL] "
-EMOJI_HEARTBEAT = "[HEARTBEAT] "
-EMOJI_REGISTRATION = "[REGISTRATION] "
-EMOJI_ALERT = "[ALERT] "
+init()
+
+class LogColors:
+    INFO = Style.NORMAL + Fore.WHITE
+    WARN = Style.BRIGHT + Fore.YELLOW
+    ERROR = Style.BRIGHT + Fore.RED
+    FATAL = Style.BRIGHT + Fore.RED
+    ALERT = Style.BRIGHT + Fore.RED
+    HEARTBEAT = Style.BRIGHT + Fore.GREEN
+    REGISTRATION = Style.BRIGHT + Fore.GREEN
+    RESET = Style.RESET_ALL
+
+EMOJI_INFO = f"{LogColors.INFO}[INFO]{LogColors.RESET} "
+EMOJI_WARN = f"{LogColors.WARN}[WARN]{LogColors.RESET} "
+EMOJI_ERROR = f"{LogColors.ERROR}[ERROR]{LogColors.RESET} "
+EMOJI_FATAL = f"{LogColors.FATAL}[FATAL]{LogColors.RESET} "
+EMOJI_HEARTBEAT = f"{LogColors.HEARTBEAT}[HEARTBEAT]{LogColors.RESET} "
+EMOJI_REGISTRATION = f"{LogColors.REGISTRATION}[REGISTRATION]{LogColors.RESET} "
+EMOJI_ALERT = f"{LogColors.ALERT}[ALERT]{LogColors.RESET} "
 
 # Global variables
 is_running = True
 last_heartbeat = None
 heartbeat_threshold = 10  # seconds
-node_id = f"ProfileService_{str(uuid.uuid4())[:8]}"
+hostname = socket.gethostname()
+node_id = f"ProfileService_{hostname}"
 service_name = "ProfileManagementService"
 service_status = "UP"
+log_counter = 1
+fluent_sender = sender.FluentSender('services', host='localhost', port=24226)
+
+def generate_log_id(service_name):
+    global log_counter
+    log_id = f"{service_name}_{log_counter}"
+    log_counter += 1  # Increment the counter
+    return log_id
 
 def get_iso_timestamp():
     return datetime.now(pytz.UTC).isoformat()
@@ -48,10 +71,18 @@ def print_log(log_data):
         emoji = EMOJI_REGISTRATION
 
     print(f"{emoji}{json.dumps(log_data, indent=2)}")
+    if log_data.get("message_type") == "LOG":
+        if log_data.get("log_level") in ["INFO", "WARN", "ERROR"]:
+            fluent_sender.emit('service_logs', log_data)
+        elif log_data.get("log_level") in ["FATAL", "ALERT"]:
+            fluent_sender.emit('alert_logs', log_data)
+    elif log_data.get("message_type") in ["HEARTBEAT", "REGISTRATION"]:
+        fluent_sender.emit('health_logs', log_data)
 
 def send_heartbeat(node_id, service_name, status="UP"):
     global last_heartbeat
-    last_heartbeat = time.time()
+    if status == "UP":
+        last_heartbeat = time.time()
     log_data = {
         "node_id": node_id,
         "message_type": "HEARTBEAT",
@@ -62,7 +93,7 @@ def send_heartbeat(node_id, service_name, status="UP"):
 
 def generate_log(node_id, service_name, log_level, message, additional_info=None):
     log = {
-        "log_id": str(uuid.uuid4()),
+        "log_id": generate_log_id(service_name),
         "node_id": node_id,
         "log_level": log_level,
         "message_type": "LOG",
@@ -115,7 +146,7 @@ def generate_warn_log():
         },
         {
             "message": "Multiple failed login attempts detected",
-            "response_time_ms": random.randint(100, 200),
+            "response_time_ms": random.randint(150, 200),
             "threshold_limit_ms": 150
         },
         {
@@ -187,7 +218,7 @@ def recovery_procedure():
     for step in recovery_steps:
         generate_log(node_id, service_name, "INFO", f"Recovery: {step}")
         time.sleep(2)
-    
+    time.sleep(6)
     service_status = "UP"
     register_service(node_id, service_name, "UP")
     generate_log(node_id, service_name, "INFO", "Recovery complete: Profile service restored")
