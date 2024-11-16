@@ -40,7 +40,7 @@ node_id = f"PaymentService_{hostname}"
 service_name = "PaymentGatewayService"
 service_status = "UP"
 log_counter = 1
-fluent_sender = sender.FluentSender('services', host='localhost', port=24224)
+fluent_sender = sender.FluentSender('services', host='localhost', port=24225)
 
 def generate_log_id(service_name):
     global log_counter
@@ -70,15 +70,27 @@ def print_log(log_data):
     elif log_data.get("message_type") == "REGISTRATION":
         emoji = EMOJI_REGISTRATION
 
-    print(f"{emoji}{json.dumps(log_data, indent=2)}")
+    try:
+        message_type = log_data.get("message_type", "UNKNOWN")
+        log_level = log_data.get("log_level", "UNKNOWN")
     
-    if log_data.get("message_type") == "LOG":
-        if log_data.get("log_level") in ["INFO", "WARN", "ERROR"]:
-            fluent_sender.emit('service_logs', log_data)
-        elif log_data.get("log_level") in ["FATAL", "ALERT"]:
-            fluent_sender.emit('alert_logs', log_data)
-    elif log_data.get("message_type") in ["HEARTBEAT", "REGISTRATION"]:
-        fluent_sender.emit('health_logs', log_data)
+        # Add logging to debug routing
+        print(f"Processing log - Type: {message_type}, Level: {log_level}")
+    
+        if message_type == "LOG":
+            if log_level in ["INFO", "WARN", "ERROR"]:
+                fluent_sender.emit('service_logs', log_data)
+            elif log_level in ["FATAL", "ALERT"]:
+                fluent_sender.emit('alert_logs', log_data)
+            else:
+                print(f"WARNING: Unhandled log level: {log_level}")
+        elif message_type in ["HEARTBEAT", "REGISTRATION"]:
+            fluent_sender.emit('health_logs', log_data)
+        else:
+            print(f"WARNING: Unhandled message type: {message_type}")
+    except Exception as e:
+        print(f"Error processing log: {e}")
+        print(f"Problematic log data: {log_data}")
 
 
 def send_heartbeat(node_id, service_name, status="UP"):
