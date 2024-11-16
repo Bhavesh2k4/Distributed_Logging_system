@@ -54,9 +54,9 @@ python3 user.py
 
 2. Start Fluentd configurations:
 ```bash
-fluentd -c p_fluent.py
-fluentd -c s_fluent.py
-fluentd -c u_fluent.py
+fluentd -c p_fluent.conf
+fluentd -c s_fluent.conf
+fluentd -c u_fluent.conf
 ```
 
 ## Monitoring Logs
