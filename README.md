@@ -64,7 +64,7 @@ fluentd -c u_fluent.conf
 
 3. Start the consumer for ElasticSearch
 ```bash
-python3 Consumer-ES.py
+python3 consumer_es.py
 ```
 
 ## Monitoring Logs
