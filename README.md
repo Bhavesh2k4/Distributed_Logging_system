@@ -8,6 +8,7 @@ This guide explains how to set up and run a microservices architecture using Kaf
 
 - Apache Kafka
 - Fluentd
+- ElasticSearch
 - Python 3.x
 - Ubuntu 22.x or 24.x
 
@@ -26,6 +27,11 @@ sudo systemctl start elasticsearch
 sudo systemctl status kafka
 sudo systemctl status fluentd.service
 sudo systemctl status elasticsearch
+```
+
+```bash
+# Elastic Search is succesfully installed if this command gets reply from the server
+curl -X GET "http://127.0.0.1:9200"
 ```
 
 ## Create Kafka Topics
