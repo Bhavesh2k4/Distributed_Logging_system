@@ -13,16 +13,19 @@ This guide explains how to set up and run a microservices architecture using Kaf
 
 ## Starting Services
 
-Start Kafka and Fluentd services:
+Start Kafka , Fluentd & ElasticSearch services:
 
 ```bash
 # Start services
 sudo systemctl start kafka
 sudo systemctl start fluentd.service
+sudo systemctl enable elasticsearch
+sudo systemctl start elasticsearch
 
 # Verify services are running
 sudo systemctl status kafka
 sudo systemctl status fluentd.service
+sudo systemctl status elasticsearch
 ```
 
 ## Create Kafka Topics
@@ -57,6 +60,11 @@ python3 user.py
 fluentd -c p_fluent.conf
 fluentd -c s_fluent.conf
 fluentd -c u_fluent.conf
+```
+
+3. Start the consumer for ElasticSearch
+```bash
+python3 Consumer-ES.py
 ```
 
 ## Monitoring Logs
@@ -110,6 +118,7 @@ When finished, stop the services:
 ```bash
 sudo systemctl stop kafka
 sudo systemctl stop fluentd.service
+sudo systemctl stop elasticsearch
 ```
 
 ## Troubleshooting
