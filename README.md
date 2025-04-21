@@ -1,8 +1,35 @@
-# EC-Team-3-distributed-logging-system
+# Microservices Distributed Logging System
 
 ## Kafka-Fluentd Microservices Setup Guide
 
-This guide explains how to set up and run a microservices architecture using Kafka and Fluentd for log management.
+A fully functional microservices-based **distributed logging system** using **Kafka**, **Fluentd**, and **ElasticSearch**, designed for scalable log ingestion and monitoring.
+
+---
+
+## 📦 Components
+
+| Component      | Description                              |
+|----------------|------------------------------------------|
+| `payment.py`   | Simulates a payment gateway (logs transactions, alerts) |
+| `stock.py`     | Simulates a stock trading service         |
+| `user.py`      | Simulates a user profile management service |
+| `consumer_es.py` | Consumes logs from Kafka and indexes them in ElasticSearch |
+| `*.conf`       | Fluentd configuration files for each service |
+
+---
+
+## 🧠 Log Types Handled
+
+| Log Type     | Kafka Topic     | Description                                  |
+|--------------|------------------|----------------------------------------------|
+| `INFO`       | `service_logs`   | Normal system activity                       |
+| `WARN`       | `service_logs`   | Latency or non-critical anomalies            |
+| `ERROR`      | `service_logs`   | Recoverable service errors                   |
+| `FATAL`      | `alert_logs`     | Critical failures, triggers recovery steps   |
+| `ALERT`      | `alert_logs`     | Heartbeat misses, threshold warnings         |
+| `HEARTBEAT`  | `health_logs`    | Regular ping from services                   |
+| `REGISTRATION` | `health_logs`  | Service boot-up/shutdown announcements       |
+
 
 ## Prerequisites
 
